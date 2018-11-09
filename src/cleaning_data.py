@@ -1,4 +1,6 @@
 import pandas as  pd
+import glob
+
 
 
 def cleaning_match(path):
@@ -15,9 +17,9 @@ def cleaning_match(path):
     # team_won = df.loc[16]
     # match_result_description = df.loc[17]''
     if (df.loc[9][0]).split(',')[1] =='neutralvenue':
-        #(match_date = df.loc[4][0]).split('season,')[1]
+        date = (df.loc[4][0]).split(',')[2]
         season = (df.loc[3][0]).split('season,')[1]
-        match_venue = (df.loc[7][0]).split('venue,')[1]
+        match_venue = (df.loc[7][0]).split(',')[2]
         match_toss = (df.loc[10][0]).split('toss_winner,')[1]
         match_toss_decision = (df.loc[11][0]).split('toss_decision,')[1]
         match_MOM = (df.loc[12][0]).split('player_of_match,')[1]
@@ -36,9 +38,9 @@ def cleaning_match(path):
         #innings = df[21:]
 
     elif (df.loc[8][0]).split(',')[1] =='neutralvenue':
-        #(match_date = df.loc[4][0]).split('season,')[1]
+        date = (df.loc[4][0]).split(',')[2]
         season = (df.loc[3][0]).split('season,')[1]
-        match_venue = (df.loc[6][0]).split('venue,')[1]
+        match_venue = (df.loc[6][0]).split(',')[2]
         match_toss = (df.loc[9][0]).split('toss_winner,')[1]
         match_toss_decision = (df.loc[10][0]).split('toss_decision,')[1]
         match_MOM = (df.loc[11][0]).split('player_of_match,')[1]
@@ -66,7 +68,7 @@ def cleaning_match(path):
         match_toss = df.loc[9]
         match_toss_decision = df.loc[10]
         match_MOM = df.loc[11]
-        team_won = df.loc[16]
+        team_won = df.loc[17]
         match_result_description = df.loc[18]
 
         #step2
@@ -80,9 +82,9 @@ def cleaning_match(path):
         match_result_description = match_result_description[0]
 
         #step3
-        #date  = date.split('date,')[1]
+        date  = date.split(',')[2]
         season  = season.split('season,')[1]
-        match_venue  = match_venue.split('venue,')[1]
+        match_venue  = match_venue.split(',')[2]
         match_toss  = match_toss.split('toss_winner,')[1]
         match_toss_decision  = match_toss_decision.split('toss_decision,')[1]
         if  MOM.split('player_of_match,')[0] == 'player_of_match':
@@ -121,9 +123,9 @@ def cleaning_match(path):
 
         #step3
         print(date)
-        #date  = date.split('date,')[1]
+        date  = date.split(',')[2]
         season  = season.split('season,')[1]
-        match_venue  = match_venue.split('venue,')[1]
+        match_venue  = match_venue.split(',')[2]
         match_toss  = match_toss.split('toss_winner,')[1]
         match_toss_decision  = match_toss_decision.split('toss_decision,')[1]
         player_of_the_match  = MOM.split('player_of_match,')[1]
@@ -135,7 +137,6 @@ def cleaning_match(path):
 
 
     else:
-        print("prum hi")
 
         match_date = df.loc[4]#earlier 4
         match_season = df.loc[3] #earlier 4
@@ -157,9 +158,9 @@ def cleaning_match(path):
 
         #step3
 
-        date  = date.split('date,')[1]
+        date  = date.split(',')[2]
         season  = season.split('season,')[1]
-        match_venue  = match_venue.split('venue,')[1]
+        match_venue  = match_venue.split(',')[2]
         match_toss  = match_toss.split('toss_winner,')[1]
         match_toss_decision  = match_toss_decision.split('toss_decision,')[1]
         player_of_the_match  = MOM.split('player_of_match,')[1]
@@ -182,7 +183,7 @@ def cleaning_match(path):
                             'sec7':'runs_scored', 'sec8':'extras?',
                             'sec9':'dissmisal_type','sec10':'batsman_out'},
                             inplace = True)
-    
+
 
     match_df['match_venue']= match_venue
     match_df['match_toss_winner']= match_toss
@@ -190,7 +191,7 @@ def cleaning_match(path):
     #match_df['player_of_the_match']= player_of_the_match
     match_df['team_won']= team_won
     #match_df['match_result_description']= match_result_description
-    #match_df['date'] = date
+    match_df['date'] = date
     match_df['season']= season
     # all_ways_runs = [0,1,2,3,4,5,6,7,8,9] #number runs can be scored in a ball
     # i = 0
@@ -205,12 +206,14 @@ def cleaning_match(path):
 def cleaning_replacing(path):
     '''takes the path to the folder,cleans and replaces existing
     path example  = 'Data/Untitled_Folder/'''
-
     for file in glob.glob(path+'*.csv'):
         df = cleaning_match(file)
-        df.drop(['Unnamed: 0','balls', 'sec0'], axis=1, inplace = True)
-
-        df.to_csv(file)
+        unique_id = (file.split('/')[-1]).split('.')[0]
+        df['match_id']= unique_id
+        df.rename(columns={'extras?':'extra'}, inplace=True)
+        df.drop(['sec0','balls'], axis = 1, inplace = True)
+        df.to_csv(file,index = False)
 
 if __name__ == "__main__":
     cleaning_match()
+    cleaning_replacing()
