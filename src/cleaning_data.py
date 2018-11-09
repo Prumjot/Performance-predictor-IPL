@@ -214,6 +214,20 @@ def cleaning_replacing(path):
         df.drop(['sec0','balls'], axis = 1, inplace = True)
         df.to_csv(file,index = False)
 
+def concating_dataframes(path):
+    '''input: path to the folder with csv files
+        output: concatenated all the files in one'''
+
+    allFiles = glob.glob(path + "/*.csv")
+    frame = pd.DataFrame()
+    list_ = []
+    for file_ in allFiles:
+        df = pd.read_csv(file_,index_col=None, header=0)
+        list_.append(df)
+    frame = pd.concat(list_)
+    return frame
+
 if __name__ == "__main__":
     cleaning_match()
     cleaning_replacing()
+    concating_dataframes()
