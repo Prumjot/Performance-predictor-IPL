@@ -4,18 +4,9 @@ import glob
 
 
 def cleaning_match(path):
-    # reading with /t right now
     df = pd.read_csv(path,sep="/t")
 
-    #extracting future columns from info
-    # match_date = df.loc[4]#earlier 4
-    # match_season = df.loc[3] #earlier 4
-    # match_venue = df.loc[6]
-    # match_toss = df.loc[8]
-    # match_toss_decision = df.loc[9]
-    # match_MOM = df.loc[10]
-    # team_won = df.loc[16]
-    # match_result_description = df.loc[17]''
+
     if (df.loc[9][0]).split(',')[1] =='neutralvenue':
         date = (df.loc[4][0]).split(',')[2]
         season = (df.loc[3][0]).split('season,')[1]
@@ -193,15 +184,8 @@ def cleaning_match(path):
     #match_df['match_result_description']= match_result_description
     match_df['date'] = date
     match_df['season']= season
-    # all_ways_runs = [0,1,2,3,4,5,6,7,8,9] #number runs can be scored in a ball
-    # i = 0
-    # for run in all_ways_runs:
-    #     if run in match_df.loc[i]:
-    #         match_df= match_df[i:]
-    #     else:
-    #         i+=1
+
     return match_df
-    #.to_csv('Data/Untitled_Folder/out1.csv')
 
 def cleaning_replacing(path):
     '''takes the path to the folder,cleans and replaces existing
@@ -212,6 +196,19 @@ def cleaning_replacing(path):
         df['match_id']= unique_id
         df.rename(columns={'extras?':'extra'}, inplace=True)
         df.drop(['sec0','balls'], axis = 1, inplace = True)
+#making all season dates as string, because some are string, some are int
+        df['season'] = df['season'].astype(str)
+
+#cleaning the names of the venue, some venues have extra " in the front of the string
+        clean_venue = []
+        for value in test['match_venue'].values:
+            if value[0] =='"':
+                value = value.lstrip('"')
+                clean_venue.append(value)
+            else:
+                clean_venue.append(value)
+            pass
+        df['match_venue'] = clean_venue
         df.to_csv(file,index = False)
 
 def concating_dataframes(path):
