@@ -1,5 +1,7 @@
 import pandas as  pd
 import glob
+import numpy as np
+
 
 
 
@@ -187,6 +189,10 @@ def cleaning_match(path):
 
     return match_df
 
+
+
+
+
 def cleaning_replacing(path):
     '''takes the path to the folder,cleans and replaces existing
     path example  = 'Data/Untitled_Folder/'''
@@ -198,10 +204,12 @@ def cleaning_replacing(path):
         df.drop(['sec0','balls'], axis = 1, inplace = True)
 #making all season dates as string, because some are string, some are int
         df['season'] = df['season'].astype(str)
+        df.season[df.season == '2007/08'] = '2008'
+        df.season[df.season == '2009/10'] = '2010'
 
 #cleaning the names of the venue, some venues have extra " in the front of the string
         clean_venue = []
-        for value in test['match_venue'].values:
+        for value in df['match_venue'].values:
             if value[0] =='"':
                 value = value.lstrip('"')
                 clean_venue.append(value)
@@ -209,6 +217,19 @@ def cleaning_replacing(path):
                 clean_venue.append(value)
             pass
         df['match_venue'] = clean_venue
+
+
+        bat = df['match_toss_winner']==df['batting_team']
+        df['inning']= bat
+        if df.match_toss_decision.iloc[0] == 'bat':
+            df.inning.loc[df.inning == True] = '1'
+            df.inning.loc[df.inning == False] = '2'
+        else:
+            df.inning.loc[df.inning == False] = '1'
+            df.inning.loc[df.inning == True] = '2'
+
+
+
         df.to_csv(file,index = False)
 
 def concating_dataframes(path):
