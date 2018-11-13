@@ -1,6 +1,8 @@
 import pandas as  pd
 import glob
 import numpy as np
+import itertools
+import random
 
 
 
@@ -232,6 +234,29 @@ def cleaning_replacing(path):
 
         df.to_csv(file,index = False)
 
+def uniqueid():
+    seed = random.getrandbits(2)
+    while True:
+       yield seed
+       seed += 1
+
+def player_id(df):
+    unique_sequence = uniqueid()
+    ids = list(itertools.islice(unique_sequence, 1000))
+    player_list = df.batsman_striker.unique()
+    dic = {}
+    i = 0
+    for player in sorted(player_list):
+        if player in dic.keys():
+            pass
+        else:
+            dic[player]=ids[i]
+            i+=1
+    player_id = pd.DataFrame.from_dict(dic, orient = 'index' ).reset_index()
+    player_id.rename(columns={'index':'batsman_striker', 0: 'player_id'}, inplace=True)
+    df  = df.merge(player_id, on='batsman_striker', how= 'left')
+    return df
+
 def concating_dataframes(path):
     '''input: path to the folder with csv files
         output: concatenated all the files in one'''
@@ -243,7 +268,8 @@ def concating_dataframes(path):
         df = pd.read_csv(file_,index_col=None, header=0)
         list_.append(df)
     frame = pd.concat(list_)
-    return frame
+    playerID = player_id(frame)
+    return playerID
 
 if __name__ == "__main__":
     cleaning_match()
