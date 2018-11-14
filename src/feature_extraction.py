@@ -68,7 +68,7 @@ def runs_per_season(df):
     #higest score for player
     df_max = df.pivot_table(index=['batsman_striker','player_id'],values=['runs_scored'],aggfunc=max)
     df_max = df_max.reset_index()
-    df_merged = df_sum.merge(df_1, on =['batsman_striker']).merge(df_max, on=['player_id','batsman_striker'])
+    df_merged = df_sum.merge(df_1, on =['batsman_striker'], how ='left').merge(df_max, on=['player_id','batsman_striker'], how= 'left')
     df_merged.rename(columns={'runs_scored_x':'runs_scored','runs_scored_y':'highest_score'}, inplace =True)
     return df_merged
 
@@ -106,6 +106,26 @@ def toss_win_count(df):
 def player_info():
     df = pd.read_csv('../../capstone_project/ipl_csv/Data/player_data/player_info_updated')
     df.drop('Unnamed: 0', axis =1, inplace = True)
+    new_player = pd.DataFrame([['Niraj Patel', '3/26/1981', 'Left-hand bat', '', 'India' ], ['AS Yadav',  '12/23/1981', 'Right-hand bat', 'Right-arm offbreak', "India"]], columns=['batsman_striker', 'DOB','Batting_hand','Bowling_skill','Country_Name'])
+    df = df.append(new_player)
+    df = df.fillna('')
+    dummies = pd.get_dummies(df.Country_Name,drop_first=True)
+    df.drop('Country_Name', axis = 1, inplace= True)
+    df = df.merge(dummies,how='right' ,left_index=True,right_index=True)
+
+    batting_hand = []
+    for value in df.Batting_hand.values:
+        if value.startswith('Right'):
+            batting_hand.append('Right_hand_bat')
+        else:
+            batting_hand.append('Left_hand_bat')
+
+    df['Batting_hand'] = batting_hand
+    batting_dummies = pd.get_dummies(df.Batting_hand,drop_first=True)
+    df.drop('Batting_hand', axis = 1, inplace= True)
+    df = df.merge(batting_dummies,how='right' ,left_index=True,right_index=True)
+
+
     return df
 
 
@@ -134,7 +154,7 @@ def all_features(df):
     toss_win = toss_win_count(df)
     stats = number_30_50s_75(df)
     zeros = number_of_zeros(df)
-    df_merged = df_1.merge(df_bf, on= ['batsman_striker','player_id', 'season']).merge(df_bs, on= ['batsman_striker', 'player_id','season'])
+    df_merged = df_1.merge(df_bf, on= ['batsman_striker','player_id', 'season'],how= 'left').merge(df_bs, on= ['batsman_striker', 'player_id','season'], how='left')
     df_merged = df_merged.merge(toss_win, on = ['batsman_striker', 'player_id','season'], how='left')
     scores_merged = df_merged.merge(stats, on=['batsman_striker','player_id', 'season'], how = 'left')
     zeros_merged = scores_merged.merge(zeros, on=['batsman_striker','player_id', 'season'], how= 'left')
