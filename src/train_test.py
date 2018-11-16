@@ -40,7 +40,7 @@ def train_and_test(train_inp, test_inp):
     #     else:
     #         age.append(value[16]-(int(value[2].split('/')[2])))
     #
-    # test['age']= age
+    test['season']= 2018
     return train, test
 
 def test_data(df):

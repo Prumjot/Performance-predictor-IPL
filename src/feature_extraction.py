@@ -142,7 +142,22 @@ def extracting_age(zeros_merged):
     player_merged['age']= age
     return player_merged
 
+def normalizing_avg(df):
+    #max_1 = df.groupby(['player_id', 'batsman_striker']).max()
+    max_1 = df.groupby(['batsman_striker']).max()
+    trial_max = max_1.reset_index()
 
+    trial_max.rename(columns={'Average': 'max_avg'}, inplace=True)
+
+    #trial_max = trial_max[['player_id','batsman_striker', 'max_avg']]
+    trial_max = trial_max[['batsman_striker', 'max_avg']]
+
+    #trial_max_avg = trial_max.merge(df, on= ['player_id','batsman_striker'], how='left')
+    trial_max_avg = trial_max.merge(df, on= ['batsman_striker'], how='left')
+
+    trial_max_avg['normalized_avg']= trial_max_avg.Average / trial_max_avg.max_avg
+
+    return trial_max_avg
 
 
 def all_features(df):
