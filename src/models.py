@@ -47,7 +47,7 @@ def train():
     reg_y['runs_per_match']= reg_y['runs_scored'] / reg_y['matches']
     reg_y = reg_y[['player_id', 'batsman_striker', 'season', 'age', 'runs_per_match']]
     reg_y = (reg_y.pivot_table(index=['player_id', 'batsman_striker'], columns=['season'], values=['runs_per_match', 'age']))
-    y_train = reg_y[('runs_per_match',2015)].values
+    #y_train = reg_y[('runs_per_match',2015)].values
     reg_x = (reg_X.groupby(['player_id', 'batsman_striker', 'season']).sum()).reset_index()
     reg_x['runs_per_match']= reg_x['runs_scored'] / reg_x['matches']
     reg_x = reg_x[['player_id', 'batsman_striker', 'season', 'age', 'runs_per_match']]
@@ -69,8 +69,8 @@ def train():
     reg_x.drop(('batsman_striker', ''), axis=1, inplace=True)
     reg_x.drop('batsman_striker', axis=1, inplace=True)
     reg_1_train = reg_x[[('std', ''),'career_runs_match','career_age',('consistency'),('runs_per_match', 2014),('runs_per_match', 2013),('runs_per_match', 2012),('runs_per_match', 2011),('runs_per_match', 2010),('runs_per_match', 2009),('runs_per_match', 2008)]]
-    X_train = reg_1_train.values
-    y_train = y_train
+    X_train = reg_1_train
+    y_train = reg_y
 
     return (X_train,y_train)
 
@@ -136,7 +136,7 @@ def validate():
     reg_x.drop(('batsman_striker', ''), axis=1, inplace=True)
     reg_x.drop('batsman_striker', axis=1, inplace=True)
     reg_1_train = reg_x[[('std', ''),'career_runs_match','career_age',('consistency'),('runs_per_match', 2015),('runs_per_match', 2014),('runs_per_match', 2013),('runs_per_match', 2012),('runs_per_match', 2011),('runs_per_match', 2010),('runs_per_match', 2009)]]
-    X_validate = reg_1_train.values
+    X_validate = reg_1_train
     y_validate = y_train
 
     return (X_validate,y_validate)
@@ -204,7 +204,7 @@ def test():
     reg_x.drop(('batsman_striker', ''), axis=1, inplace=True)
     reg_x.drop('batsman_striker', axis=1, inplace=True)
     reg_1_train = reg_x[[('std', ''),'career_runs_match','career_age',('consistency'),('runs_per_match', 2016),('runs_per_match', 2015),('runs_per_match', 2014),('runs_per_match', 2013),('runs_per_match', 2012),('runs_per_match', 2011),('runs_per_match', 2010)]]
-    X_test = reg_1_train.values
+    X_test = reg_1_train
     y_test = y_train
 
     return (X_test,y_test)
