@@ -1,56 +1,39 @@
 from feature_extraction import extracting_total_outs_per_batsman, runs_per_season, all_features, player_info, extracting_age
 from cleaning_data import concating_dataframes, cleaning_replacing
 import pandas as pd
+from collections import Counter
 
 
-def train_and_test(train_inp, test_inp):
+def train_and_test(train_inp):
     '''input train : input upto the season for training'''
 
     all_df =concating_dataframes('../../capstone_project/ipl_csv/Data/trial/')
     player = player_info()
 
-
-
     train = all_df[(all_df.season <=train_inp)]
-    test = all_df[all_df.season < test_inp]
+    #test = all_df[all_df.season < test_inp]
 
     train = train_data(train)
+    train = train.sort_values(['player_id', 'season'])
+    # counting seasons played!
+    cnt = Counter()
+    for player in train.batsman_striker:
+        cnt[player] += 1
+    career_age = pd.DataFrame.from_dict(cnt, orient = 'index').reset_index()
+    career_age = career_age.sort_values(0, ascending=False).reset_index()
+    career_age = career_age.rename(columns={'level_0':'player_id', 'index':'batsman_striker', 0:'seasons_played'})
+    career_age.drop('player_id',axis= 1 ,inplace= True)
+    train= pd.merge(train, career_age, on= 'batsman_striker', how='outer')
+    train['total_seasons_played']= train['seasons_played']-1
+    train.drop(columns='seasons_played', axis=1, inplace=True)
+    train = train.rename(columns={'total_seasons_played':'career_age'})
 
-    # test = test.groupby(['batsman_striker','player_id','season']).count().reset_index()
-    # test = test[['batsman_striker', 'player_id', 'season']]
-    # test = test.merge(player, on=['batsman_striker'], how = 'left')
+    #test = test_data(test)
 
-    test = test_data(test)
-    # next step would add recent stats of the player to 2017 list.
-    # test = test.merge(train, on=['batsman_striker', 'player_id', 'runs_scored', 'season','DOB','Right_hand_bat',
-    #                             'Bowling_skill', 'Australia','Bangladesh','England',
-    #                             'India','Netherlands','New Zealand','Pakistan',
-    #                             'South Africa','Sri Lanka','West Indies','Zimbabwea'], how='left')
-
-    #
-    # #test = test.fillna('')
-    # test.dropna(inplace=True)
-    # #test['season'] = test.season.replace('', 2017)
-    #
-    # test.drop('age', axis=1, inplace = True)
-    # age = []
-    # for value in test.values:
-    #     if (int(value[2].split('/')[0]))<=3:
-    #         age.append(value[16]-(int(value[2].split('/')[2]))-1)
-    #     else:
-    #         age.append(value[16]-(int(value[2].split('/')[2])))
-    #
-    test['season']= 2018
-    return train, test
+    #test['season']= 2018
+    return train #test
 
 def test_data(df):
-
-    # list_ = []
-    # for i in season:
-    #     train = df[(df.season == i)]
-    #     train = test_all_features(train)
-    #     list_.append(train)
-    # frame = pd.concat(list_)
     frame = test_all_features(df)
     frame.drop_duplicates('batsman_striker', inplace = True)
     return frame
@@ -230,3 +213,18 @@ def test_all_features(df):
     #     col_avg = train[col].values.mean()
     #     df[col] = df[col].replace('', col_avg)
     # return test
+if __name__ == "__main__":
+    train_and_test()
+    test_data()
+    train_data()
+    test_extracting_total_outs_per_batsman()
+    test_number_of_zeros()
+    test_number_30_50s_75()
+    test_runs_per_season()
+    test_batting_first()
+    test_batting_second()
+    test_average_and_strike_rate()
+    test_toss_win_count()
+    player_info()
+    extracting_age()
+    test_all_features()
