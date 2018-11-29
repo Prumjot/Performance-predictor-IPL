@@ -4,12 +4,14 @@ from train_test import train_and_test
 from collections import Counter
 import pandas as pd
 import numpy as np
+from scipy import stats
+from sklearn.preprocessing import StandardScaler
 
 
 
-
+#
 def train(df):
-    df = df[df.career_age >= 3]
+    df = df[df.career_age >= 5]
 
     # making sure that i have same players in y_train and x_train
     target_year = sorted(df.season.unique())[-1]
@@ -22,19 +24,36 @@ def train(df):
     season_stats = calculating_season_stats(X)
     career_stats = calculating_career_stats(X)
 
-    stats = season_stats.merge(career_stats, on=['batsman_striker'], how='outer').fillna(0)
+    all_stats = season_stats.merge(career_stats, on=['batsman_striker'], how='outer').fillna(0)
 
     #dropping player id, batsman_striker, and all the ages, expcept career age
-    stats = stats.sort_values(('player_id', ''), ascending=True)
-    stats.drop(stats.iloc[:,[0,1,2,3,4,5,6,7]], axis =1, inplace=True)
-    X = stats
+    all_stats = all_stats.sort_values(('player_id', ''), ascending=True)
+    all_stats.drop(all_stats.columns[[0,1,2,3,4,5,6,7]], axis =1, inplace=True)
+    #drops consistency and career_runs_match
+    all_stats.drop(['consistency', 'career_runs_match'], axis=1, inplace=True)
+    X = all_stats
     y = calculating_y_stats(y)
+    mapper = {('runs_per_match_avg', 2009):'2009,runs_per_match', ('runs_per_match_avg', 2010):'2010,runs_per_match',
+       ('runs_per_match_avg', 2011):'2011,runs_per_match', ('runs_per_match_avg', 2012):'2012,runs_per_match',
+       ('runs_per_match_avg', 2013):'2013,runs_per_match', ('runs_per_match_avg', 2014):'2014,runs_per_match',
+       ('runs_per_match_avg', 2015):'2015,runs_per_match',('runs_per_match_avg', 2016):'2016,runs_per_match',
+          ('runs_per_match_avg', 2017):'2017,runs_per_match',('runs_per_match_avg', 2008):'2008,runs_per_match',
+          ('std', ''):'std','career_age':'career_age'}
+    label = []
+    for col in X.columns:
+        if col not in mapper.keys():
+            label.append(col)
+    X.drop(label, axis=1, inplace=True)
+    X.rename(columns=mapper, inplace=True)
+    X_col = sorted(X.columns.tolist())
+    cols = X_col[::-1]
+    X = X[cols]
 
     return X,y
 
 
 def test(df):
-    df = df[df.career_age >= 3]
+    df = df[df.career_age >= 5]
 
     # making sure that i have same players in y_train and x_train
     target_year = sorted(df.season.unique())[-1]
@@ -47,13 +66,31 @@ def test(df):
     season_stats = calculating_season_stats(X)
     career_stats = calculating_career_stats(X)
 
-    stats = season_stats.merge(career_stats, on=['batsman_striker'], how='outer').fillna(0)
+    all_stats = season_stats.merge(career_stats, on=['batsman_striker'], how='outer').fillna(0)
 
     #dropping player id, batsman_striker, and all the ages, expcept career age
-    stats = stats.sort_values(('player_id', ''), ascending=True)
-    stats.drop(stats.iloc[:,[0,1,2,3,4,5,6,7]], axis =1, inplace=True)
-    X = stats
+    all_stats = all_stats.sort_values(('player_id', ''), ascending=True)
+    #drops all ages
+    all_stats.drop(all_stats.columns[[0,1,2,3,4,5,6,7]], axis =1, inplace=True)
+    #drops consistency and career_runs_match
+    all_stats.drop(['consistency', 'career_runs_match'], axis=1, inplace=True)
+    X = all_stats
     y = calculating_y_stats(y)
+    mapper = {('runs_per_match_avg', 2009):'2009,runs_per_match', ('runs_per_match_avg', 2010):'2010,runs_per_match',
+       ('runs_per_match_avg', 2011):'2011,runs_per_match', ('runs_per_match_avg', 2012):'2012,runs_per_match',
+       ('runs_per_match_avg', 2013):'2013,runs_per_match', ('runs_per_match_avg', 2014):'2014,runs_per_match',
+       ('runs_per_match_avg', 2015):'2015,runs_per_match',('runs_per_match_avg', 2016):'2016,runs_per_match',
+          ('runs_per_match_avg', 2017):'2017,runs_per_match',('runs_per_match_avg', 2008):'2008,runs_per_match',
+          ('std', ''):'std', 'career_age':'career_age'}
+    label = []
+    for col in X.columns:
+        if col not in mapper.keys():
+            label.append(col)
+    X.drop(label, axis=1, inplace=True)
+    X.rename(columns=mapper, inplace=True)
+    X_col = sorted(X.columns.tolist())
+    cols = X_col[::-1]
+    X = X[cols]
 
     return X,y
 
@@ -65,8 +102,8 @@ def calculating_season_stats(df_X_train):
     bat_avg = bat_avg.reset_index()
 
     #calculating standard deviation of runs per match through out the career upto target year
-    std = bat_avg.reindex_axis(sorted(ch.columns), axis=1)
-    std.drop(std.iloc[:,[0,1,2,3,4]], axis =1, inplace=True)
+    std = bat_avg.reindex_axis(sorted(bat_avg.columns), axis=1)
+    std.drop(std.columns[[0,1,2,3,4]], axis =1, inplace=True)
     std = std.T.fillna(bat_avg.mean(axis=1)).T
     #adding mean to not nan seasons(season missed by players)
 
@@ -102,14 +139,15 @@ def calculating_y_stats(df_y):
     y = (df_y.groupby(['player_id', 'batsman_striker', 'season']).sum()).reset_index()
     y['runs_per_match']= y['runs_scored'] / y['matches']
     y = y[['player_id', 'batsman_striker', 'season', 'age', 'runs_per_match']]
-    y = (y_train.pivot_table(index=['player_id', 'batsman_striker'], columns=['season'], values=['runs_per_match', 'age']))
-    y = y_train.sort_values('player_id', ascending=True)
+    y = (y.pivot_table(index=['player_id', 'batsman_striker'], columns=['season'], values=['runs_per_match', 'age']))
+    y = y.sort_values('player_id', ascending=True)
 
     return y
 
 def train_test_for_model(From,To):
 #we only want batsman that will play in year i am testing for!
-
+    ''' From: starting year
+        To =  target year(validation/ testing year)'''
     df_train = train_and_test(To)
     df_test = train_and_test(To+1)
     #train = all_df[all_df.season<=  To   ]
@@ -121,10 +159,14 @@ def train_test_for_model(From,To):
     X_test, y_test = test(df_test)
 
 
-    return X_train, y_train, X_test, y_test
+
+
+
+    #return X_train.values, y_train.iloc[:,1].values, X_test.values, y_test.iloc[:,1].values
+    return X_train, y_train.iloc[:,1], X_test, y_test.iloc[:,1]
 
 # def train():
-#     train, test = train_and_test(2015, 2017)
+#     train = train_and_test(2015)
 #     reg_X = train.copy()
 #     reg_X = reg_X.drop_duplicates()
 #     reg_X = reg_X.sort_values(['player_id', 'season'])
@@ -192,7 +234,7 @@ def train_test_for_model(From,To):
 #
 # def validate():
 #
-#     train, test = train_and_test(2016, 2017)
+#     train = train_and_test(2016)
 #     reg_X = train.copy()
 #     reg_X = reg_X.drop_duplicates()
 #     reg_X = reg_X[reg_X.season!=2008]
@@ -259,7 +301,7 @@ def train_test_for_model(From,To):
 #
 # def test():
 #
-#     train, test = train_and_test(2017, 2017)
+#     train = train_and_test(2017)
 #     reg_X = train.copy()
 #     reg_X = reg_X.drop_duplicates()
 #     reg_X = reg_X[reg_X.season!=2008]

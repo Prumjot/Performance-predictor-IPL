@@ -27,6 +27,7 @@ def train_and_test(train_inp):
     train['total_seasons_played']= train['seasons_played']-1
     train.drop(columns='seasons_played', axis=1, inplace=True)
     train = train.rename(columns={'total_seasons_played':'career_age'})
+    train = train[train.batsman_striker != 'BB McCullum']
 
     #test = test_data(test)
 
